@@ -12,8 +12,8 @@ test:
 	$(PYTEST) $(PYTEST_ARGS) tests/
 
 cov:
-	$(PYTEST) --cov=crawler
+	$(PYTEST) --cov-config=.coveragrc --cov=crawler
 
 cov-report:
-	$(PYTEST) --cov=crawler --cov-report=html
+	$(PYTEST) --cov-config=.coveragrc --cov=crawler --cov-report=html
 
