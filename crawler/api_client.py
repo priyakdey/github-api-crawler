@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from math import ceil
+from typing import Dict, Any, List, Tuple
 
 import requests
 
@@ -48,6 +49,50 @@ class Token:
     def _is_expired(cls) -> bool:
         """Checks if token has expired"""
         return True if cls._tte > _now() else False
+
+
+def get_details_for_category(category: str, page: int = 1) -> Tuple[int, List[Dict[str, Any]]]:
+    """Returns the API details for a category
+
+    :param category The category for which details is requests
+    :param page Page number for which details is requested. Default value is 1
+    :returns (total count, list of api details)
+    """
+    url = C.GET_DATA_FOR_CATEGORY_URL.substitute({"page": page, "category": category})
+    token = Token.get_token()
+    headers = {"Authorization": "Bearer " + token}
+    data = RestClient.get(url, headers=headers)
+    return data["count"], data["categories"]
+
+
+def get_all_categories() -> List[str]:
+    """Returns a list of all the categories returned by the API
+
+    :returns List of categories
+    """
+    categories = []
+    data = _get_category_for_page(1)
+    _count = data["count"]
+    logger.info("Total count of categories is %s", _count)
+    categories.extend(data["categories"])
+
+    # Pagination for categories
+    start_page = 2
+    end_page = ceil(_count / 10)
+
+    for page in range(start_page, end_page + 1):
+        data = _get_category_for_page(page)
+        categories.extend(data["categories"])
+
+    return categories
+
+
+def _get_category_for_page(page: int) -> Dict[str, Any]:
+    url = C.GET_ALL_CATEGORIES_URL.substitute({"page": page})
+    token = Token.get_token()
+    headers = {"Authorization": "Bearer " + token}
+    data = RestClient.get(url, headers=headers)
+    return data
 
 
 # Cause this makes more sense than to use a third part lib to test
