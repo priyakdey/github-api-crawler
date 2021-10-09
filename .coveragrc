@@ -1,0 +1,3 @@
+[run]
+omit =
+    crawler/__init__.py, crawler/__main__.py
