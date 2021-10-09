@@ -1,11 +1,13 @@
+from datetime import timedelta
+
 import pytest
 
-from crawler.api_client import RestClient
+from crawler.api_client import RestClient, Token
 from crawler.exceptions import APIException
 
 
 class MockResponse:
-    """Mock Response to be returned"""
+    """Class to mock server responses"""
 
     def __init__(self, json_date, status_code):
         self.json_data = json_date
@@ -34,3 +36,47 @@ def test_get_exception(mocker):
         RestClient.get("http://mock-url")
     assert e.value.err_code == 404
     assert e.value.err_msg == "Issue with external api"
+
+
+def test_get_token_if_empty_cache(mocker):
+    def mock_token(*args, **kwargs):
+        return MockResponse({"token": "some-random-token"}, 200)
+
+    mocker.patch("requests.get", side_effect=mock_token)
+    token = Token.get_token()
+    assert token == "some-random-token"
+    assert Token._tte is not None
+
+
+def test_get_token_when_not_expired(mocker):
+    def first_mock_token_from_server(*args, **kwargs):
+        return MockResponse({"token": "first-token"}, 200)
+    mocker.patch("requests.get", side_effect=first_mock_token_from_server)
+    assert Token.get_token() == "first-token"
+
+    # Let us mock a call 2 minutes before the expiration
+    mock_current_time = Token._tte - timedelta(minutes=-2)
+    mocker.patch("crawler.api_client._now", return_value=mock_current_time)
+
+    # a new  token should come from the server in case the actual call goes through
+    def second_mock_token_from_server(*args, **kwargs):
+        return MockResponse({"token": "second-token"}, 200)
+    mocker.patch("requests.get", side_effect=second_mock_token_from_server)
+    assert Token.get_token() == "first-token"
+
+
+def test_get_token_when_expired(mocker):
+    def first_mock_token_from_server(*args, **kwargs):
+        return MockResponse({"token": "first-token"}, 200)
+    mocker.patch("requests.get", side_effect=first_mock_token_from_server)
+    assert Token.get_token() == "first-token"
+
+    # Let us mock a call exactly 5 minutes 1 second after the expiration
+    mock_current_time = Token._tte - timedelta(minutes=5, seconds=1)
+    mocker.patch("crawler.api_client._now", return_value=mock_current_time)
+
+    # a new  token should come from the server in case the actual call goes through
+    def second_mock_token_from_server(*args, **kwargs):
+        return MockResponse({"token": "second-token"}, 200)
+    mocker.patch("requests.get", side_effect=second_mock_token_from_server)
+    assert Token.get_token() == "second-token"
