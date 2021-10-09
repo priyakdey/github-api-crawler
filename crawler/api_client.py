@@ -19,6 +19,7 @@ class RestClient:
         """Makes a get call and returns a jsonified response.
         In case server returns non 200 code, raised APIException
         """
+        logger.info("GET - %s", url)
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             return response.json()
@@ -39,7 +40,7 @@ class Token:
     def get_token(cls) -> str:
         if cls._token is None or cls._is_expired():
             # Make a call to get the token
-            logger.info("Getting a token from the server")
+            logger.info("Token cache is empty or expired. Getting a token from the server")
             data = RestClient.get(C.GET_TOKEN_URL)
             cls._token = data["token"]
             cls._tte = _now() + timedelta(minutes=5)
@@ -58,6 +59,7 @@ def get_details_for_category(category: str, page: int = 1) -> Tuple[int, List[Di
     :param page Page number for which details is requested. Default value is 1
     :returns (total count, list of api details)
     """
+    logger.info("Getting api details for %s and page number %s", category, page)
     url = C.GET_DATA_FOR_CATEGORY_URL.substitute({"page": page, "category": category})
     token = Token.get_token()
     headers = {"Authorization": "Bearer " + token}
@@ -70,20 +72,24 @@ def get_all_categories() -> List[str]:
 
     :returns List of categories
     """
+    logger.info("Fetching all categories from api")
     categories = []
+
     data = _get_category_for_page(1)
-    _count = data["count"]
-    logger.info("Total count of categories is %s", _count)
+    total_count = data["count"]
+    logger.info("Total count of categories is %s", total_count)
     categories.extend(data["categories"])
 
     # Pagination for categories
     start_page = 2
-    end_page = ceil(_count / 10)
+    end_page = ceil(total_count / 10)
 
     for page in range(start_page, end_page + 1):
         data = _get_category_for_page(page)
         categories.extend(data["categories"])
 
+    logger.info("Fetched all categories from api")
+    logger.debug(categories)
     return categories
 
 
