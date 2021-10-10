@@ -4,6 +4,7 @@ from math import ceil
 from typing import Dict, Any, List, Tuple
 
 import requests
+from ratelimit import limits, sleep_and_retry
 
 from crawler import constants as C
 from crawler.exceptions import APIException
@@ -15,6 +16,8 @@ class RestClient:
     """Client which is capable of making Rest API calls"""
 
     @staticmethod
+    @sleep_and_retry
+    @limits(calls=10, period=60)
     def get(url: str, headers: Dict[str, Any] = None) -> Dict[str, Any]:
         """Makes a get call and returns a jsonified response.
         In case server returns non 200 code, raised APIException
