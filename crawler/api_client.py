@@ -49,7 +49,7 @@ class Token:
     @classmethod
     def _is_expired(cls) -> bool:
         """Checks if token has expired"""
-        return True if cls._tte > _now() else False
+        return True if _now() > cls._tte else False
 
 
 def get_details_for_category(category: str, page: int = 1) -> Tuple[int, List[Dict[str, Any]]]:

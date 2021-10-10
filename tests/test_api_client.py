@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import pytest
 
@@ -49,7 +49,32 @@ def test_get_token_if_empty_cache(mocker):
     assert Token._tte is not None
 
 
+@pytest.mark.parametrize(
+    "minutes,seconds,expected",
+    [(5, 1, True), (4, 59, False)]
+)
+def test_token_is_expired(mocker, minutes, seconds, expected):
+    # Clear cache FIXME : find a better way to contain test
+    Token._token = None
+    Token._tte = None
+
+    def mock_token(*args, **kwargs):
+        return MockResponse({"token": "some-random-token"}, 200)
+
+    mocker.patch("requests.get", side_effect=mock_token)
+    Token.get_token()
+
+    mock_now = datetime.now() + timedelta(minutes=minutes, seconds=seconds)
+    mocker.patch("crawler.api_client._now", return_value=mock_now)
+
+    assert Token._is_expired() is expected
+
+
 def test_get_token_when_not_expired(mocker):
+    # Clear cache FIXME : find a better way to contain test
+    Token._token = None
+    Token._tte = None
+
     def first_mock_token_from_server(*args, **kwargs):
         return MockResponse({"token": "first-token"}, 200)
 
@@ -57,7 +82,7 @@ def test_get_token_when_not_expired(mocker):
     assert Token.get_token() == "first-token"
 
     # Let us mock a call 2 minutes before the expiration
-    mock_current_time = Token._tte - timedelta(minutes=-2)
+    mock_current_time = Token._tte - timedelta(minutes=2)
     mocker.patch("crawler.api_client._now", return_value=mock_current_time)
 
     # a new  token should come from the server in case the actual call goes through
@@ -69,14 +94,18 @@ def test_get_token_when_not_expired(mocker):
 
 
 def test_get_token_when_expired(mocker):
+    # Clear cache FIXME : find a better way to contain test
+    Token._token = None
+    Token._tte = None
+
     def first_mock_token_from_server(*args, **kwargs):
         return MockResponse({"token": "first-token"}, 200)
 
     mocker.patch("requests.get", side_effect=first_mock_token_from_server)
     assert Token.get_token() == "first-token"
 
-    # Let us mock a call exactly 5 minutes 1 second after the expiration
-    mock_current_time = Token._tte - timedelta(minutes=5, seconds=1)
+    # Let us mock a call exactly 1 second after the expiration
+    mock_current_time = Token._tte + timedelta(seconds=1)
     mocker.patch("crawler.api_client._now", return_value=mock_current_time)
 
     # a new  token should come from the server in case the actual call goes through
