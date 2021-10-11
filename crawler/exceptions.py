@@ -16,3 +16,8 @@ class ApplicationException(Exception):
 class APIException(ApplicationException):
     """Raised when and External API Call returns non 200 code"""
     pass
+
+
+class DatabaseException(ApplicationException):
+    """Raised when issue with database connection"""
+    pass
