@@ -17,7 +17,7 @@ class RestClient:
 
     @staticmethod
     @sleep_and_retry
-    @limits(calls=10, period=timedelta(seconds=60).total_seconds())
+    @limits(calls=10, period=timedelta(seconds=62).total_seconds())  # 2 seconds grace
     def get(url: str, headers: Dict[str, Any] = None) -> Dict[str, Any]:
         """Makes a get call and returns a jsonified response.
         In case server returns non 200 code, raised APIException
@@ -26,8 +26,20 @@ class RestClient:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 403:
+            # Because of how we are managing the rate limiter, there can be cases where
+            # the token is not expired, but till thread comes alive, it is. So we then retry
+            # Issue: https://github.com/priyakdey/github-api-crawler/issues/16
+            return _retry(url)
         else:
             raise APIException(response.status_code, "Issue with external api")  # TODO: err msg to be better
+
+
+def _retry(url: str) -> Dict[str, Any]:
+    logger.info("The token has expired. Need to retry with a new token")
+    token = Token.get_token()
+    headers = {"Authorization": "Bearer " + token}
+    return RestClient.get(url, headers)
 
 
 class Token:
@@ -46,7 +58,7 @@ class Token:
             logger.info("Token cache is empty or expired. Getting a token from the server")
             data = RestClient.get(C.GET_TOKEN_URL)
             cls._token = data["token"]
-            cls._tte = _now() + timedelta(minutes=4, seconds=55)  # keep 5 seconds grace
+            cls._tte = _now() + timedelta(minutes=4, seconds=59)  # keep 1 second grace
             logger.info("Token received from server. Token will expire at %s", cls._tte)
         return cls._token
 

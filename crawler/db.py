@@ -1,8 +1,11 @@
 import logging
+from typing import Dict, List, Any
 
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from crawler import constants as C
+from crawler.exceptions import DatabaseException
 
 logger = logging.getLogger(__name__)
 
@@ -30,3 +33,18 @@ class DatabaseConnectionManager:
         if self.conn is not None:
             logger.debug("Closing the database connection")
             self.conn.close()
+
+
+def insert_all(api_details: List[Dict[str, Any]]):
+    """Inserts all the api details into the DB"""
+    logger.info("Dumping all api details into database")
+    conn_string = C.DB_CONN_STRING
+    with DatabaseConnectionManager(conn_string) as conn_manager:
+        database = conn_manager["api-details-db"]
+        collection = database["github-public-api-details"]
+        try:
+            collection.insert_many(api_details)
+            logger.info("Dumping all api details into database completed")
+        except PyMongoError as e:
+            logger.error("Issue faced while trying to insert the data into db")
+            raise DatabaseException(100, e.args[0])  # TODO: Need to check this
