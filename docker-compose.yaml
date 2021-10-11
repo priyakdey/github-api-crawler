@@ -3,11 +3,13 @@ version: '3.9'
 
 services:
   github-api-crawler:
-    image: priyakdey/github-api-crawler:0.1
+    image: priyakdey/github-api-crawler:0.2
     container_name: github-api-crawler
-    restart: always
+    restart: "no"
     depends_on:
       - mongo
+      - mongo-express
+
   mongo:
     image: mongo
     container_name: mongo-db

@@ -1,6 +1,6 @@
 import logging
 
-from crawler import api_client, db
+from crawler import api_client, banner, db
 from crawler.exceptions import APIException, DatabaseException
 
 FORMAT = "%(asctime)s %(levelname)9s %(process)d --- [%(name)25s] : %(message)s"
@@ -10,8 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> int:
+    logger.info("------------------------------------------------")
+    logger.info(banner.APP_BANNER)
+    logger.info("Starting crawling process")
     try:
-        logger.info("Starting crawling process")
         categories = api_client.get_all_categories()
         logger.info("Total categories fetched = %s", len(categories))
         api_details = api_client.get_details_for_all_categories(categories)
