@@ -51,7 +51,7 @@ def test_get_token_if_empty_cache(mocker):
 
 @pytest.mark.parametrize(
     "minutes,seconds,expected",
-    [(5, 1, True), (4, 59, False)]
+    [(4, 56, True), (4, 55, True), (4, 54, False)]
 )
 def test_token_is_expired(mocker, minutes, seconds, expected):
     # Clear cache FIXME : find a better way to contain test

@@ -17,7 +17,7 @@ class RestClient:
 
     @staticmethod
     @sleep_and_retry
-    @limits(calls=10, period=60)
+    @limits(calls=10, period=timedelta(seconds=60).total_seconds())
     def get(url: str, headers: Dict[str, Any] = None) -> Dict[str, Any]:
         """Makes a get call and returns a jsonified response.
         In case server returns non 200 code, raised APIException
@@ -46,13 +46,14 @@ class Token:
             logger.info("Token cache is empty or expired. Getting a token from the server")
             data = RestClient.get(C.GET_TOKEN_URL)
             cls._token = data["token"]
-            cls._tte = _now() + timedelta(minutes=5)
+            cls._tte = _now() + timedelta(minutes=4, seconds=55)  # keep 5 seconds grace
+            logger.info("Token received from server. Token will expire at %s", cls._tte)
         return cls._token
 
     @classmethod
     def _is_expired(cls) -> bool:
         """Checks if token has expired"""
-        return True if _now() > cls._tte else False
+        return True if _now() >= cls._tte else False
 
 
 def get_details_for_category(category: str, page: int = 1) -> Tuple[int, List[Dict[str, Any]]]:
@@ -94,6 +95,25 @@ def get_all_categories() -> List[str]:
     logger.info("Fetched all categories from api")
     logger.debug(categories)
     return categories
+
+
+def get_details_for_all_categories(categories: List[str]) -> List[Dict[str, Any]]:
+    """Get all api details for categories
+
+    :param categories List of all categories returned from server
+    :returns List of api details
+    """
+    api_details = []
+    for category in categories:
+        total_count, data = get_details_for_category(category, 1)
+        api_details.extend(data)
+        start_page = 2
+        end_page = ceil(total_count / 10)
+
+        for page in range(start_page, end_page + 1):
+            _, data = get_details_for_category(category, page)
+            api_details.extend(data)
+    return api_details
 
 
 def _get_category_for_page(page: int) -> Dict[str, Any]:
