@@ -90,3 +90,27 @@ the image from the file itself*
 You can run the services using docker-compose-local.yaml - `docker-compose up -f docker-compose-local.yaml`
 which will run a mongo db database and a mongo-express server to check the data.
 Once setup done, you can run the code using your fav ide.
+
+
+Also, change line [number 5](https://github.com/priyakdey/github-api-crawler/blob/master/crawler/constants.py#L5)to: 
+`DB_CONN_STRING = "mongodb://admin:password@localhost:27017/"`
+
+
+###### Improvements
+
+---
+
+Since this was a project asked for an interview review to a friend, I am not going to post the complete question,
+but follow the instructions and add improvements which I think can be done given more time. (A weekend was given for this).
+
+1. **Configuration Driven** - The database URLs will differ depending on different envs. 
+One example is changing the URL in constants.py file when running on local and not as a stack, which I do not like.
+So the URLs needs to be config driven. Open issue [#21](https://github.com/priyakdey/github-api-crawler/issues/21))
+is there for this.
+2. **Performance** - Though python is not a good multithreaded platform, I can leverage multiprocess and implement 
+a Pub-Sub model to speed up the process; the producer pushed the data to a Pipe (I can use SQS maybe and in that case
+switch to Dynamo or still use Mongo Service) while the consumer keeps pushing the data to the DB. This might not give a huge
+performance benefit specially on local db, since currently after the data fetch, the collection.insert_many takes few ms
+to load the complete data, but in real time with cloud services and geo-location, this might be an advantage.
+3. **Design Patterns** - I need to revist the complete design and check for more python code and optimisation that can be done.
+
