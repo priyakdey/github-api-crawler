@@ -83,7 +83,7 @@ and trying it out, do change namespace in docker-compose file as well. Later, I 
 the image from the file itself*
 
 
-###### Steps to run code locally
+###### Steps to run/debug code locally
 
 ---
 
@@ -92,9 +92,14 @@ which will run a mongo db database and a mongo-express server to check the data.
 Once setup done, you can run the code using your fav ide.
 
 
-Also, change line [number 5](https://github.com/priyakdey/github-api-crawler/blob/master/crawler/constants.py#L5)to: 
+Also, change line [number 5](https://github.com/priyakdey/github-api-crawler/blob/master/crawler/constants.py#L5) to: 
 `DB_CONN_STRING = "mongodb://admin:password@localhost:27017/"`
 
+- Create and activate your virtual env
+- Install the dependencies by running - `pip install -r requirements-dev.txt`
+
+**NOTE** - Ignore the linux dev requirements file with lots of stuff which is specially needed for my wsl setup and vim
+to work. So ignore that!
 
 ###### Improvements
 
