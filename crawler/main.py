@@ -1,7 +1,10 @@
 import logging
 
-from crawler import api_client, banner, db
-from crawler.exceptions import APIException, DatabaseException
+from crawler import api_client
+from crawler import banner
+from crawler import db
+from crawler.exceptions import APIException
+from crawler.exceptions import DatabaseException
 
 FORMAT = "%(asctime)s %(levelname)9s %(process)d --- [%(name)25s] : %(message)s"
 logging.basicConfig(format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S", level=logging.DEBUG)

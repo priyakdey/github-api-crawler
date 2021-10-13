@@ -1,5 +1,7 @@
 import logging
-from typing import Dict, List, Any
+from typing import Any
+from typing import Dict
+from typing import List
 
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError

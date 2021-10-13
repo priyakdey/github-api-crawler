@@ -1,10 +1,15 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from math import ceil
-from typing import Dict, Any, List, Tuple
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import requests
-from ratelimit import limits, sleep_and_retry
+from ratelimit import limits
+from ratelimit import sleep_and_retry
 
 from crawler import constants as C
 from crawler.exceptions import APIException
